@@ -547,7 +547,6 @@ def pkmn1_setup(pokemon_list, move_list, pkmn1_move_list):
 
 
 def pkmn2_setup(pokemon_list, move_list, pkmn2_move_list):
-  print("Setting up pkmn2")
 
   pkmn2 = Pokemon("", "", "", "", 0, 0, 0, 0, 0, 0)
   
@@ -573,15 +572,28 @@ def pkmn2_setup(pokemon_list, move_list, pkmn2_move_list):
 
 
 #-------- ACTION ---------
+# Most functions from now on pertain to the battle system
+
+
 def hp_bar(max_hp, current_hp):
+  # Function that prints the HP bar of each Pokémon
+  # HP bar is filled according to the current HP the Pokémon has left
+  # This part calculates the filled part of the HP bar
   current_percentage = round((100 * current_hp) / max_hp)
   quotient = current_percentage / 5
+
+  # This part calculates the emptied part of the HP bar
+  left_percentage = 100 - current_percentage
+  left_quotient = left_percentage/5
+  
   print("[", end="")
   if quotient > 0 and quotient < 1:
     print("#", end="")
   elif quotient >= 1:
     for i in range(round(quotient)):
       print("#", end="")
+    for i in range(round(left_quotient)):
+      print(" ", end="")
   print("]", end="")
 
 
@@ -599,6 +611,8 @@ def critical_hit():
 
 
 def STAB(used_move, user):
+  # Returns if move is STAB or not
+  # STAB = Same Type Attack Bonus
   if used_move.type == user.type1 or used_move.type == user.type2:
     return 1.5
   else:
@@ -609,6 +623,7 @@ def STAB(used_move, user):
 def deal_damage(used_move, user, target):
   # Must return amount of damage dealt on the target as an integer
   # Target's current hp will be subtracted with that
+  
   # First, it is going to calculate if the move will miss or not based on its accuracy.
   calculated_accuracy = 100 - used_move.accuracy
   rdm_number = r.randint(1, 100)
@@ -618,12 +633,16 @@ def deal_damage(used_move, user, target):
     damage = 0
     t.sleep(1)
 
+  # If the move indeed hits the target, it calculates the type effectiveness
   else:
     multiplier = type_chart(used_move, user, target)
     if multiplier == 0:
       damage = 0
       t.sleep(1)
-      
+
+    # Then it determines if it is a physical move or special move
+    # If it is physical it uses the Attack and Defense stats
+    # If it is special it uses the Special Attack and Special Defense stats
     else:
       if used_move.category == "physical":
         damage = round((((42 * used_move.power * (user.atk / target.dfs)) / 50) + 2) * ((r.randint(85, 100)) / 100) * multiplier * critical_hit() * STAB(used_move, user))
@@ -632,7 +651,8 @@ def deal_damage(used_move, user, target):
       elif used_move.category == "special":
         damage = round((((42 * used_move.power * (user.spa / target.spd)) / 50) + 2) * ((r.randint(85, 100)) / 100) * multiplier * critical_hit() * STAB(used_move, user))
         t.sleep(1)
-      
+
+    # A message narrating the damage dealt
     print(user.name + " dealt " + str(damage) + " damage to " + target.name + "!")
   t.sleep(1)
   return int(damage)
@@ -640,6 +660,9 @@ def deal_damage(used_move, user, target):
 
 
 def is_everyone_alive(pkmn1, pkmn2, pkmn1_current_hp, pkmn2_current_hp):
+# This function checks if every Pokémon is still alive
+# If any of them has no HP left, the battle ends
+# It also determines who won the battle
   if pkmn1_current_hp <= 0:
     print("")
     print(pkmn1.name + " is down!")
@@ -664,7 +687,8 @@ def is_everyone_alive(pkmn1, pkmn2, pkmn1_current_hp, pkmn2_current_hp):
 
 # This function should return the type effectiveness multiplier
 def type_chart(used_move, pkmn1, pkmn2):
-  
+
+  # Matrix
   # Columns have to follow this pattern ["name_of_defense_type", multipliers]
   # type_column = ["type", 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
   # Indexes should match the same type for both attack and defense
@@ -701,6 +725,7 @@ def type_chart(used_move, pkmn1, pkmn2):
 
   cont += 1
 
+  # Calculates two times in case of dual types (4x weaknesses and 0.25x resistances)
   for i in defender_type:
     if i[0] == pkmn2.type1:
       for j in range(len(i)):
@@ -726,31 +751,35 @@ def type_chart(used_move, pkmn1, pkmn2):
 
 
 def battle(pokemon_list, move_list):
-  print("BATTLE STARTS")
+  # This is the battle system itself, it emulates a 1v1 battle between two Pokémon, in a similar fashion to the main series games, with some of the main mechanics.
+  print("--------BATTLE!!!--------")
   print("")
 
+  # This functions firstly checks if there are enough Pokémon and moves available for a battle to occur
+  if len(pokemon_list) < 2:
+    print("Your Pokémon list doesn't have enough Pokémon, please, insert at least two Pokémon or load a Pokémon data file")
+    print("")
+    menu()
+  elif len(move_list) == 0:
+    print("Your move_list is empty. Please, insert at least one move or load a move data file.")
+    print("")
+    menu()
+
+  # First, the program sets up your Pokémon and the Opponent's Pokémon
+  # Your Pokémon is set up by the user inputs
+  # The foe's Pokémon is randomly generated
   pkmn1_move_list = []
   pkmn2_move_list = []
   pkmn1 = pkmn1_setup(pokemon_list, move_list, pkmn1_move_list)
   pkmn2 = pkmn2_setup(pokemon_list, move_list, pkmn2_move_list)
 
+  print("")
+  print("BATTLE STARTS")
+  print("")
+
   pkmn1_current_hp = pkmn1.hp
   pkmn2_current_hp = pkmn2.hp
   everyone_alive = True
-
-  if pkmn1.spe <= pkmn2.spe:
-    print(pkmn1.name + " is faster than " + pkmn2.name)
-    option_foe = r.randint(0, 3)
-    for i in range(len(pkmn2_move_list)):
-      if i == option_foe:
-        print("")
-        print(pkmn2.name + " used " + pkmn2_move_list[i].name + "!")
-        chosen_move = pkmn2_move_list[i]
-        
-    damage_dealt = deal_damage(chosen_move, pkmn2, pkmn1)
-    pkmn1_current_hp -= damage_dealt
-
-    everyone_alive = is_everyone_alive(pkmn1, pkmn2, pkmn1_current_hp, pkmn2_current_hp)
   
   
   while everyone_alive == True:
@@ -776,42 +805,72 @@ def battle(pokemon_list, move_list):
       for i in pkmn1_move_list:
         n += 1
         print("[" + str(n) + "] " + i.name)
-  
+
+    # User chooses which move they want to use
       print("")
       option = int(input("Which move you want to use? Type a number here: "))
       while option <= 0 or option >= 5:
         print("Please, type a number between 1 and 4.")
         option = int(input("Which move you want to use? Type a number here: "))
       option -= 1
-    
+
+    if pkmn1.spe >= pkmn2.spe:
       # Your Pokémon is attacking
       for i in range(len(pkmn1_move_list)):
         if i == option:
           print("")
           print(pkmn1.name + " used " + pkmn1_move_list[i].name + "!")
           chosen_move = pkmn1_move_list[i]
-      
       damage_dealt = deal_damage(chosen_move, pkmn1, pkmn2)
       
       pkmn2_current_hp -= damage_dealt
   
       everyone_alive = is_everyone_alive(pkmn1, pkmn2, pkmn1_current_hp, pkmn2_current_hp)
-  
-  
-    if everyone_alive == True:
+      
+      if everyone_alive == True:
+        # Opponent's Pokémon is attacking
+        option_foe = r.randint(0, 3)
+      
+        for i in range(len(pkmn2_move_list)):
+          if i == option_foe:
+            print("")
+            print(pkmn2.name + " used " + pkmn2_move_list[i].name + "!")
+            chosen_move = pkmn2_move_list[i]
+            
+        damage_dealt = deal_damage(chosen_move, pkmn2, pkmn1)
+        pkmn1_current_hp -= damage_dealt
+
+      # Checks if all Pokémon are still alive
+      # If any of them is fainted, the battle ends and user is sent back to the main menu
+      everyone_alive = is_everyone_alive(pkmn1, pkmn2, pkmn1_current_hp, pkmn2_current_hp)
+
+    elif pkmn1.spe < pkmn2.spe:
       # Opponent's Pokémon is attacking
       option_foe = r.randint(0, 3)
-    
+      
       for i in range(len(pkmn2_move_list)):
         if i == option_foe:
           print("")
           print(pkmn2.name + " used " + pkmn2_move_list[i].name + "!")
           chosen_move = pkmn2_move_list[i]
-          
+            
       damage_dealt = deal_damage(chosen_move, pkmn2, pkmn1)
       pkmn1_current_hp -= damage_dealt
+
+      everyone_alive = is_everyone_alive(pkmn1, pkmn2, pkmn1_current_hp, pkmn2_current_hp)
+
+      if everyone_alive == True:
+        for i in range(len(pkmn1_move_list)):
+          if i == option:
+            print("")
+            print(pkmn1.name + " used " + pkmn1_move_list[i].name + "!")
+            chosen_move = pkmn1_move_list[i]
+        damage_dealt = deal_damage(chosen_move, pkmn1, pkmn2)
+        
+        pkmn2_current_hp -= damage_dealt
   
       everyone_alive = is_everyone_alive(pkmn1, pkmn2, pkmn1_current_hp, pkmn2_current_hp)
+      
 
     print("")
   menu()
