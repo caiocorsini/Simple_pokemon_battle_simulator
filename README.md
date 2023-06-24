@@ -7,5 +7,12 @@ This a 1v1 Pokémon battle simulator containing:
 - It is only a 1v1 battle. Other forms of Pokémon battle such as 6v6 and doubles are not available yet
 - It contains type effectiveness, STABs, accuracy and critical hits
 
-To be added soon...
-- improve speed mechanic. For now, the user Pokémon always outspeeds the opponent without taking speed stat into account. This will soon be fixed.
+
+UPDATES
+
+24/06/2023
+- Fixed HP bar, now with empty part for lost HP.
+- Fixed Speed mechanic. Now turn order is dictated by Pokémon speed stat.
+
+TO BE ADDED SOON
+- CSV system to be replaced by the more standard JSON system
